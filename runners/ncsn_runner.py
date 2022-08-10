@@ -76,7 +76,7 @@ class NCSNRunner():
             pass
 
         for epoch in range(start_epoch, self.config.training.n_epochs):
-            for i, (X, y) in enumerate(dataloader):
+            for i, X in enumerate(dataloader):
                 score.train()
                 step += 1
 
