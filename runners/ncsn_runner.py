@@ -38,7 +38,7 @@ class NCSNRunner():
         os.makedirs(args.log_sample_path, exist_ok=True)
 
     def train(self):
-        dataset, test_dataset = get_dataset(self.args, self.config)
+        dataset, test_dataset = get_dataset(self.config)
         dataloader = DataLoader(dataset, batch_size=self.config.training.batch_size, shuffle=True,
                                 num_workers=self.config.data.num_workers)
         test_loader = DataLoader(test_dataset, batch_size=self.config.training.batch_size, shuffle=True,
@@ -72,43 +72,13 @@ class NCSNRunner():
                 ema_helper.load_state_dict(states[4])
 
         sigmas = get_sigmas(self.config)
+        hook = test_hook = None
 
-        if self.config.training.log_all_sigmas:
-            ### Commented out training time logging to save time.
-            test_loss_per_sigma = [None for _ in range(len(sigmas))]
+        def tb_hook():
+            pass
 
-            def hook(loss, labels):
-                # for i in range(len(sigmas)):
-                #     if torch.any(labels == i):
-                #         test_loss_per_sigma[i] = torch.mean(loss[labels == i])
-                pass
-
-            def tb_hook():
-                # for i in range(len(sigmas)):
-                #     if test_loss_per_sigma[i] is not None:
-                #         tb_logger.add_scalar('test_loss_sigma_{}'.format(i), test_loss_per_sigma[i],
-                #                              global_step=step)
-                pass
-
-            def test_hook(loss, labels):
-                for i in range(len(sigmas)):
-                    if torch.any(labels == i):
-                        test_loss_per_sigma[i] = torch.mean(loss[labels == i])
-
-            def test_tb_hook():
-                for i in range(len(sigmas)):
-                    if test_loss_per_sigma[i] is not None:
-                        tb_logger.add_scalar('test_loss_sigma_{}'.format(i), test_loss_per_sigma[i],
-                                             global_step=step)
-
-        else:
-            hook = test_hook = None
-
-            def tb_hook():
-                pass
-
-            def test_tb_hook():
-                pass
+        def test_tb_hook():
+            pass
 
         for epoch in range(start_epoch, self.config.training.n_epochs):
             for i, (X, y) in enumerate(dataloader):
@@ -172,8 +142,8 @@ class NCSNRunner():
                     if self.config.model.ema:
                         states.append(ema_helper.state_dict())
 
-                    torch.save(states, os.path.join(self.args.log_path, 'checkpoint_{}.pth'.format(step)))
-                    torch.save(states, os.path.join(self.args.log_path, 'checkpoint.pth'))
+                    torch.save(states, os.path.join(self.args.log_path, 'resume_checkpoint_{}.pth'.format(step)))
+                    torch.save(states, os.path.join(self.args.log_path, 'resume_checkpoint.pth'))
 
                     if self.config.training.snapshot_sampling:
                         if self.config.model.ema:
@@ -231,7 +201,7 @@ class NCSNRunner():
         sigmas_th = get_sigmas(self.config)
         sigmas = sigmas_th.cpu().numpy()
 
-        dataset, _ = get_dataset(self.args, self.config)
+        dataset, _ = get_dataset(self.config)
         dataloader = DataLoader(dataset, batch_size=self.config.sampling.batch_size, shuffle=True,
                                 num_workers=4)
 
@@ -417,7 +387,7 @@ class NCSNRunner():
 
         sigmas = get_sigmas(self.config)
 
-        dataset, test_dataset = get_dataset(self.args, self.config)
+        dataset, test_dataset = get_dataset(self.config)
         test_dataloader = DataLoader(test_dataset, batch_size=self.config.test.batch_size, shuffle=True,
                                      num_workers=self.config.data.num_workers, drop_last=True)
 

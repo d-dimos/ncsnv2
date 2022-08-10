@@ -4,6 +4,8 @@ import hashlib
 import errno
 from torch.utils.model_zoo import tqdm
 
+import glob
+
 
 def gen_bar_updater():
     pbar = tqdm(total=None)
@@ -184,3 +186,8 @@ def _save_response_content(response, destination, chunk_size=32768):
                 progress += len(chunk)
                 pbar.update(progress - pbar.n)
         pbar.close()
+
+
+def get_all_files(folder, pattern='*'):
+    files = [x for x in glob.iglob(os.path.join(folder, pattern))]
+    return sorted(files)
