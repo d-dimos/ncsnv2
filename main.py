@@ -21,7 +21,7 @@ def parse_args_and_config():
     parser.add_argument('--seed', type=int, default=1234, help='Random seed')
     parser.add_argument('--exp', type=str, default='exp', help='Path for saving running related data.')
     parser.add_argument('--doc', type=str, required=True, help='A string for documentation purpose. '
-                                                               'Will be the name of the log folder.')
+                                                               'Will be the name of the logs folder.')
     parser.add_argument('--comment', type=str, default='', help='A string for experiment comment')
     parser.add_argument('--verbose', type=str, default='info', help='Verbose level: info | debug | warning | critical')
     parser.add_argument('--test', action='store_true', help='Whether to test the model')
@@ -165,7 +165,7 @@ def dict2namespace(config):
 
 def main():
     args, config = parse_args_and_config()
-    logging.info("Writing log file to {}".format(args.log_path))
+    logging.info("Writing logs file to {}".format(args.log_path))
     logging.info("Exp instance id = {}".format(os.getpid()))
     logging.info("Exp comment = {}".format(args.comment))
     logging.info("Config =")

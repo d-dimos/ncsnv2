@@ -116,7 +116,9 @@ class NCSNRunner():
                         test_iter = iter(test_loader)
                         test_X = next(test_iter)
 
-                    test_X = test_X.to(self.config.device)
+                    test_X = test_X['mvue']
+                    test_X = torch.view_as_real(test_X.squeeze(dim=1)).permute(0, 3, 1, 2)
+                    test_X = test_X.contiguous().to(self.config.device)
                     test_X = data_transform(self.config, test_X)
 
                     with torch.no_grad():
