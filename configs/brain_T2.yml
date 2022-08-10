@@ -3,7 +3,7 @@ project_dir:
 maps_dir:
 
 training:
-  batch_size: 2
+  batch_size: 32
   n_epochs: 500000
   n_iters: 320001
   snapshot_freq: 10000
