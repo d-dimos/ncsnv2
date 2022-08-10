@@ -23,7 +23,8 @@ __all__ = ['NCSNRunner']
 
 
 def get_model(config):
-        return NCSNv2Deepest(config).to(config.device)
+    return NCSNv2Deepest(config).to(config.device)
+
 
 class NCSNRunner():
     def __init__(self, args, config):
@@ -33,18 +34,13 @@ class NCSNRunner():
         os.makedirs(args.log_sample_path, exist_ok=True)
 
     def train(self):
-        dataset, test_dataset = get_dataset(self.config)
+        dataset = get_dataset(self.config)
         dataloader = DataLoader(dataset, batch_size=self.config.training.batch_size, shuffle=True,
-                                num_workers=self.config.data.num_workers)
-        test_loader = DataLoader(test_dataset, batch_size=self.config.training.batch_size, shuffle=True,
-                                 num_workers=self.config.data.num_workers, drop_last=True)
-        test_iter = iter(test_loader)
+                                num_workers=self.config.data.num_workers, drop_last=True)
+
         self.config.input_dim = self.config.data.image_size ** 2 * self.config.data.channels
 
-        tb_logger = self.config.tb_logger
-
         score = get_model(self.config)
-
         score = torch.nn.DataParallel(score)
         optimizer = get_optimizer(self.config, score.parameters())
 
@@ -67,72 +63,33 @@ class NCSNRunner():
                 ema_helper.load_state_dict(states[4])
 
         sigmas = get_sigmas(self.config)
-        hook = test_hook = None
-
-        def tb_hook():
-            pass
-
-        def test_tb_hook():
-            pass
+        hook = None
 
         for epoch in range(start_epoch, self.config.training.n_epochs):
-            for i, sample in enumerate(dataloader):
+            for i, full_batch in enumerate(dataloader):
                 score.train()
                 step += 1
-
-                X = sample['mvue']
-                X = torch.view_as_real(X.squeeze(dim=1)).permute(0, 3, 1, 2).contiguous()
-                X = X.to(self.config.device)
-                X = data_transform(self.config, X)
-
-                loss = anneal_dsm_score_estimation(score, X, sigmas, None,
-                                                   self.config.training.anneal_power,
-                                                   hook)
-                tb_logger.add_scalar('loss', loss, global_step=step)
-                tb_hook()
-
-                print("step: {}, loss: {}".format(step, loss.item()))
-                logging.info("step: {}, loss: {}".format(step, loss.item()))
-
                 optimizer.zero_grad()
-                loss.backward()
+                batch = full_batch['mvue']
+                for sample in batch:
+                    X = torch.view_as_real(sample).permute(0, 3, 1, 2).contiguous()
+                    X = X.to(self.config.device)
+                    X = data_transform(self.config, X)
+
+                    loss = anneal_dsm_score_estimation(score, X, sigmas, None,
+                                                       self.config.training.anneal_power,
+                                                       hook)
+                    loss = loss / self.config.training.batch_size
+                    loss.backward()
+
                 optimizer.step()
+                logging.info("step: {}, loss: {}".format(step, loss.item()))
 
                 if self.config.model.ema:
                     ema_helper.update(score)
 
                 if step >= self.config.training.n_iters:
                     return 0
-
-                if step % 100 == 0:
-                    if self.config.model.ema:
-                        test_score = ema_helper.ema_copy(score)
-                    else:
-                        test_score = score
-
-                    test_score.eval()
-                    try:
-                        test_X = next(test_iter)
-                    except StopIteration:
-                        test_iter = iter(test_loader)
-                        test_X = next(test_iter)
-
-                    test_X = test_X['mvue']
-                    test_X = torch.view_as_real(test_X.squeeze(dim=1)).permute(0, 3, 1, 2)
-                    test_X = test_X.contiguous().to(self.config.device)
-                    test_X = data_transform(self.config, test_X)
-
-                    with torch.no_grad():
-                        test_dsm_loss = anneal_dsm_score_estimation(test_score, test_X, sigmas, None,
-                                                                    self.config.training.anneal_power,
-                                                                    hook=test_hook)
-                        tb_logger.add_scalar('test_loss', test_dsm_loss, global_step=step)
-                        test_tb_hook()
-
-                        print("step: {}, test_loss: {}".format(step, test_dsm_loss.item()))
-                        logging.info("step: {}, test_loss: {}".format(step, test_dsm_loss.item()))
-
-                        del test_score
 
                 if step % self.config.training.snapshot_freq == 0:
                     states = [
@@ -388,7 +345,6 @@ class NCSNRunner():
                     test_loss = anneal_dsm_score_estimation(score, x, sigmas, None,
                                                             self.config.training.anneal_power)
                     if verbose:
-                        print("step: {}, test_loss: {}".format(step, test_loss.item()))
                         logging.info("step: {}, test_loss: {}".format(step, test_loss.item()))
 
                     mean_loss += test_loss.item()
@@ -397,7 +353,6 @@ class NCSNRunner():
             mean_grad_norm /= step
             average_grad_scale /= step
 
-            print("ckpt: {}, average test loss: {}".format(ckpt, mean_loss))
             logging.info("ckpt: {}, average test loss: {}".format(
                 ckpt, mean_loss
             ))
