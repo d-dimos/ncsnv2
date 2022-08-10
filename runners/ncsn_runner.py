@@ -111,10 +111,10 @@ class NCSNRunner():
 
                     test_score.eval()
                     try:
-                        test_X, test_y = next(test_iter)
+                        test_X = next(test_iter)
                     except StopIteration:
                         test_iter = iter(test_loader)
-                        test_X, test_y = next(test_iter)
+                        test_X = next(test_iter)
 
                     test_X = test_X.to(self.config.device)
                     test_X = data_transform(self.config, test_X)
