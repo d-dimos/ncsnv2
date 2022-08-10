@@ -91,6 +91,7 @@ class NCSNRunner():
                 tb_logger.add_scalar('loss', loss, global_step=step)
                 tb_hook()
 
+                print("step: {}, loss: {}".format(step, loss.item()))
                 logging.info("step: {}, loss: {}".format(step, loss.item()))
 
                 optimizer.zero_grad()
@@ -127,6 +128,8 @@ class NCSNRunner():
                                                                     hook=test_hook)
                         tb_logger.add_scalar('test_loss', test_dsm_loss, global_step=step)
                         test_tb_hook()
+
+                        print("step: {}, test_loss: {}".format(step, test_dsm_loss.item()))
                         logging.info("step: {}, test_loss: {}".format(step, test_dsm_loss.item()))
 
                         del test_score
@@ -385,6 +388,7 @@ class NCSNRunner():
                     test_loss = anneal_dsm_score_estimation(score, x, sigmas, None,
                                                             self.config.training.anneal_power)
                     if verbose:
+                        print("step: {}, test_loss: {}".format(step, test_loss.item()))
                         logging.info("step: {}, test_loss: {}".format(step, test_loss.item()))
 
                     mean_loss += test_loss.item()
@@ -393,6 +397,7 @@ class NCSNRunner():
             mean_grad_norm /= step
             average_grad_scale /= step
 
+            print("ckpt: {}, average test loss: {}".format(ckpt, mean_loss))
             logging.info("ckpt: {}, average test loss: {}".format(
                 ckpt, mean_loss
             ))
