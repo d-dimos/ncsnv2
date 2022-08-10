@@ -81,7 +81,7 @@ class NCSNRunner():
                 step += 1
 
                 X = sample['mvue']
-                X = torch.view_as_real(X.squeeze(dim=1)).permute(0, 3, 1, 2)
+                X = torch.view_as_real(X.squeeze(dim=1)).permute(0, 3, 1, 2).contiguous()
                 X = X.to(self.config.device)
                 X = data_transform(self.config, X)
 
