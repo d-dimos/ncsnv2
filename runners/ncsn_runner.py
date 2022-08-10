@@ -142,41 +142,6 @@ class NCSNRunner():
                     torch.save(states, os.path.join(self.args.log_path, 'resume_checkpoint_{}.pth'.format(step)))
                     torch.save(states, os.path.join(self.args.log_path, 'resume_checkpoint.pth'))
 
-                    if self.config.training.snapshot_sampling:
-                        if self.config.model.ema:
-                            test_score = ema_helper.ema_copy(score)
-                        else:
-                            test_score = score
-
-                        test_score.eval()
-
-                        ## Different part from NeurIPS 2019.
-                        ## Random state will be affected because of sampling during training time.
-                        init_samples = torch.rand(36, self.config.data.channels,
-                                                  self.config.data.image_size, self.config.data.image_size,
-                                                  device=self.config.device)
-                        init_samples = data_transform(self.config, init_samples)
-
-                        all_samples = anneal_Langevin_dynamics(init_samples, test_score, sigmas.cpu().numpy(),
-                                                               self.config.sampling.n_steps_each,
-                                                               self.config.sampling.step_lr,
-                                                               final_only=True, verbose=True,
-                                                               denoise=self.config.sampling.denoise)
-
-                        sample = all_samples[-1].view(all_samples[-1].shape[0], self.config.data.channels,
-                                                      self.config.data.image_size,
-                                                      self.config.data.image_size)
-
-                        sample = inverse_data_transform(self.config, sample)
-
-                        image_grid = make_grid(sample, 6)
-                        save_image(image_grid,
-                                   os.path.join(self.args.log_sample_path, 'image_grid_{}.png'.format(step)))
-                        torch.save(sample, os.path.join(self.args.log_sample_path, 'samples_{}.pth'.format(step)))
-
-                        del test_score
-                        del all_samples
-
     def sample(self):
         if self.config.sampling.ckpt_id is None:
             states = torch.load(os.path.join(self.args.log_path, 'checkpoint.pth'), map_location=self.config.device)

@@ -7,7 +7,7 @@ training:
   n_epochs: 500000
   n_iters: 320001
   snapshot_freq: 10000
-  snapshot_sampling: true
+  snapshot_sampling: false
   anneal_power: 2
   log_all_sigmas: false
 
