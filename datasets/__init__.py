@@ -10,7 +10,7 @@ from datasets.utils import get_all_files
 
 
 def get_dataset(config):
-    folder_path = os.path.join(config.project_dir, config['input_dir'])
+    folder_path = os.path.join(config.project_dir, config.input_dir)
     files = get_all_files(folder_path, pattern='*.h5')
 
     assert config.data.dataset == 'brain_T2'
