@@ -80,7 +80,7 @@ class NCSNRunner():
                 score.train()
                 step += 1
 
-                X = X.to(self.config.device)
+                X = X['mvue'].to(self.config.device)
                 X = data_transform(self.config, X)
 
                 loss = anneal_dsm_score_estimation(score, X, sigmas, None,
