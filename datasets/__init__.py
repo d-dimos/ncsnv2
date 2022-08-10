@@ -1,7 +1,7 @@
 import os
 import torch
-from datasets.celeba import CelebA
-from datasets.ffhq import FFHQ
+# from datasets.celeba import CelebA
+# from datasets.ffhq import FFHQ
 from torch.utils.data import Subset
 import numpy as np
 
