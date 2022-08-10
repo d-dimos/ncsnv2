@@ -76,11 +76,13 @@ class NCSNRunner():
             pass
 
         for epoch in range(start_epoch, self.config.training.n_epochs):
-            for i, X in enumerate(dataloader):
+            for i, sample in enumerate(dataloader):
                 score.train()
                 step += 1
 
-                X = X['mvue'].to(self.config.device)
+                X = sample['mvue']
+                X = torch.view_as_real(X.squeeze(dim=1)).permute(0, 3, 1, 2)
+                X = X.to(self.config.device)
                 X = data_transform(self.config, X)
 
                 loss = anneal_dsm_score_estimation(score, X, sigmas, None,
