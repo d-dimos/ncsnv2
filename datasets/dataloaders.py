@@ -7,7 +7,7 @@ import torch
 from tqdm import tqdm
 import h5py
 import sigpy as sp
-from utils import get_mvue
+from csgm_utils import get_mvue
 import pickle as pkl
 from xml.etree import ElementTree as ET
 import sys
